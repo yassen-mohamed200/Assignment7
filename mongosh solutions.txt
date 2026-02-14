@@ -1,0 +1,188 @@
+create database : use library
+
+1- Create an explicit collection named “books” with a validation rule to ensure that each 
+document has a non-empty “title” field.
+solution:db.createCollection('books', {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["title"],
+      properties: {
+        title: {
+          bsonType: "string",
+          minLength: 1,
+          description: "title must be a non-empty string"
+        },
+        author: {
+          bsonType: "string"
+        },
+        year: {
+          bsonType: "int"
+        },
+        genres: {
+          bsonType: "array",
+          items: { bsonType: "string" }
+        }
+      }
+    }
+  }
+});
+==========================================================================================================================================
+2. Create an implicit collection by inserting data directly into a new collection named 
+“authors”
+solution:db.autors.insertMany([
+  {name:'yassen',nationality:'egyption'},
+  {name:'user1',nationality:'british'},
+])
+==========================================================================================================================================
+3. Create a capped collection named “logs” with a size limit of 1MB
+solution:db.createCollection('logs',{
+  capped:true,
+  size:1024*1024
+})
+==========================================================================================================================================
+4. Create an index on the books collection for the title field.
+solution:db.books.createIndex({title:1})
+==========================================================================================================================================
+5. Insert one document into the books collection.
+solution:db.books.insertOne({
+  title:'book1',
+  author:'yassen',
+  year:2004,
+  genres:['fantasty','adventure']
+})
+==========================================================================================================================================
+6. Insert multiple documents into the books collection with at least three records. 
+solution:db.books.insertMany([
+  {
+    title:'clean code',
+    author:'Robert Cecil',
+    year:'2008'
+  },
+  {
+    title:'java script',
+    author:'Douglas Crockford',
+    year:'2008'
+  }, 
+  {
+    title:'Khan Al-Khalili',
+    author:'Naguib Mahfouz',
+    year:'1945'
+  },
+])
+==========================================================================================================================================
+7. Insert a new log into the logs collection.
+solution:db.logs.insertOne({
+  book_id:ObjectId('6989cca2f4b73f63d22427d9'),
+  action:'borrowed'
+})
+==========================================================================================================================================
+8. Update the book with title “Future” change the year to be 2022.     Future==> clean code
+solution:db.books.updateOne({
+  title: 'clean code'
+},{
+  $set:{year:2022}
+})
+==========================================================================================================================================
+9. Find a Book with title “Brave New World”.       “Brave New World”==> 'Khan Al-Khalili'
+solution:db.books.find({title:'Khan Al-Khalili'})
+==========================================================================================================================================
+10. Find all books published between 1990 and 2010.
+solution:db.books.find({
+  year:{
+    $gte:1990,
+    $lt:2010
+  }
+})
+==========================================================================================================================================
+10. Find all books published between 1990 and 2010.
+solution:db.books.find({
+  year:{
+    $gt:1990,
+    $lt:2010
+  }
+})
+==========================================================================================================================================
+11. Find books where the genre includes "Science Fiction".
+solution:db.books.find({
+  genres:"fantasty"
+})
+==========================================================================================================================================
+12. Skip the first two books, limit the results to the next three, sorted by year in descending order.
+solution:db.books.find().skip(2).limit(3).sort({
+  year:-1
+})
+==========================================================================================================================================
+13. Find books where the year field stored as an integer. 
+solution:db.books.find({
+  year:{
+    $type:'int'
+  }
+})
+==========================================================================================================================================
+14. Find all books where the genres field does not include any of the genres "Horror" or "Science Fiction". 
+solution:db.books.find({
+  $or: [
+    { genres: 'fantasy' },
+    { genres: 'adventure' }
+  ]
+})
+==========================================================================================================================================
+15. Delete all books published before 2000.
+solution:db.books.deleteOne({
+  year:{
+    $lt:2000
+  }
+})
+==========================================================================================================================================
+16. Using aggregation Functions, Filter books published after 2000 and sort them by year descending.
+solution:db.books.aggregate([
+  {$match:{
+    year:{
+      $gt:2000
+    }
+  }},
+  {
+    $sort:{
+      year:-1
+    }
+  }
+])
+==========================================================================================================================================
+17. Using aggregation functions, Find all books published after the year 2000. For each 
+matching book, show only the title, author, and year fields.
+solution:db.books.aggregate([
+  {$match:{
+    year:{
+      $gt:2000
+    }
+  }},
+  {
+    $project:{
+      title:1,
+      author:1,
+      year:1,
+      _id:0
+    }
+    
+  }
+])
+==========================================================================================================================================
+18. Using aggregation functions,break an array of genres into separate documents.
+solution:db.books.aggregate([
+  {
+    $unwind:'$genres'
+  }
+])
+==========================================================================================================================================
+19. Using aggregation functions, Join the books collection with the logs collection.
+solution:db.logs.aggregate([
+  {
+    $lookup:{
+      from:'books',
+      localField: "book_id",
+      foreignField: "_id",
+      as: "books_logs"
+    }
+  }
+])
